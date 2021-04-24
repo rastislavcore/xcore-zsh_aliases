@@ -12,15 +12,8 @@ alias lst='ls --color=auto'
 alias ls='ls -hAF --color=auto'
 alias lsr='ls -hAlF --color=auto'
 
-# Colorize the grep command output for ease of use (good for log files)
-alias grep='grep --color=auto'
-alias egrep='egrep --color=auto'
-alias fgrep='fgrep --color=auto'
-
 # ensure remove confirmations
-alias delete='rm -rfI'
-alias remo='rm -if'
-alias remove='gio trash'
+alias remove='rm -rfI'
 
 # Rename file
 alias rename='mv'
@@ -53,7 +46,6 @@ alias music='cd ~/Music'
 alias pictures='cd ~/Pictures'
 alias videos='cd ~/Videos'
 alias trash='cd ~/.local/share/Trash/files'
-alias roottrash='cd /root/.local/share/Trash/files'
 alias media='cd /media/$(whoami)'
 
 # Environment variables
@@ -69,24 +61,17 @@ alias mount='mount |column -t'
 # Date
 alias now='date -Is'
 alias nowtime='date +"%T"'
-alias nowdate='date +"%d-%m-%Y"'
+alias nowdate='date +"%Y-%m-%d"'
 alias nowtz='date +"%z"'
 
 # Show open ports
 alias ports='netstat -tulanp'
 
 # Shortcut for iptables and pass it via sudo
-alias ipt='sudo /sbin/iptables'
-# Get current IP address on eth0
-alias inet='ip -4 addr show eth0 | sed -nr "s|.*inet ([^ ]+)/.*|\1|p"'
-alias inet6='ip -6 addr show eth0 | sed -nr "s|.*inet6 ([^ ]+)/.*|\1|p"'
 alias myip='hostname -I'
 alias wanip='dig +short myip.opendns.com @resolver1.opendns.com'
 # Mac addresses
 alias macs='cat /sys/class/net/*/address'
-
-# Add sudo user
-alias addsudo='sudo usermod -a -G sudo'
 
 # Generate digest
 alias sha1='openssl sha1'
@@ -95,26 +80,25 @@ alias sha384='openssl sha384'
 alias sha512='openssl sha512'
 
 # Install software with apt
-alias aptins='sudo apt update && sudo apt install -y'
-alias aptget='sudo apt install -y'
-alias aptdel='sudo apt purge -y'
+alias insta='sudo apt update && sudo apt install -y'
+alias uninsta='sudo apt purge -y'
 
-# Minio client
+# minio-mc client https://github.com/minio/mc
 alias mc='minio-mc-nsg'
 alias cloud='minio-mc-nsg'
 
-# Tor & Ghost
+# Tor & torsocks & Ghost
 alias torstart='systemctl start tor'
 alias torstop='systemctl stop tor'
 alias torrenew='systemctl reload tor'
-alias torrun='torsocks'
-alias torcheck='firefox --safe-mode --private-window https://check.torproject.org'
 alias ghost='torghostng'
 alias ghoststart='torghostng -s -m'
 alias ghoststop='torghostng -x'
 alias ghostrenew='torghostng -r'
 alias torsockson='source torsocks on'
 alias torsocksoff='source torsocks off'
+torcheck() { curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IsTor'])" }
+torip() { curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IP'])" }
 
 # Wireguard
 alias wgstart='wg-quick up'
@@ -261,7 +245,7 @@ sha512verify() {
 hello() {
   clear
   echo "\033[1;33m★ Per aspera ad astra\n"
-  echo "\033[1;34mWelcome $USER!\n"
+  echo "\033[1;34mWelcome $USER\n"
   echo "\033[0;34mToday is \033[1;36m$(date "+%c")"
   echo "\033[0;34mYou are working on:"
   echo "\033[1;36m\t$(cat /sys/devices/virtual/dmi/id/sys_vendor) - $(cat /sys/devices/virtual/dmi/id/product_name)"
