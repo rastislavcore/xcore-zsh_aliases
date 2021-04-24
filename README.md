@@ -47,16 +47,33 @@ fi
 
 > Please, make attention that your current `~/.zsh_aliases` will be replaced.
 
+> Linux
+
 Using Wget:
 
 ```sh
-wget https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases -nc --no-dns-cache -O ->> ~/.zsh_aliases
+wget https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-linux -nc --no-dns-cache -O ->> ~/.zsh_aliases
 ```
 
 or cURL:
 
 ```sh
-curl https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases > ~/.zsh_aliases
+curl https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-linux > ~/.zsh_aliases
+```
+
+> macOS
+
+
+Using Wget:
+
+```sh
+wget https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-darwin -nc --no-dns-cache -O ->> ~/.zsh_aliases
+```
+
+or cURL:
+
+```sh
+curl https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-darwin > ~/.zsh_aliases
 ```
 
 ## Contribution
