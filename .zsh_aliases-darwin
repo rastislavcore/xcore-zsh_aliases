@@ -1,0 +1,220 @@
+###XCORE+###
+## sudo alias
+alias sudo='sudo '
+
+# Extended listing
+alias lst='ls -G'
+alias ls='ls -hAFG'
+alias lsr='ls -hAlFG'
+
+# Colorize the grep command output for ease of use (good for log files)
+alias grep='`which grep` --color=always'roo
+
+# ensure remove confirmations
+alias remove='rm -rfI'
+
+# Rename file
+alias rename='mv'
+
+# human readable df
+alias df='df -h'
+
+# switch user
+alias switchuser='su'
+
+# Top alias
+alias top='htop'
+
+# All is micro editor
+alias nano='micro'
+alias edit='micro'
+
+# Paths
+alias path='pwd'
+alias cd..='cd ..'
+alias ..='cd ..'
+alias ...='cd ../../../'
+alias ....='cd ../../../../'
+alias .....='cd ../../../../../'
+alias home='cd ~/'
+alias desktop='cd ~/Desktop'
+alias documents='cd ~/Documents'
+alias downloads='cd ~/Downloads'
+alias music='cd ~/Music'
+alias pictures='cd ~/Pictures'
+alias movies='cd ~/Movies'
+alias trash='cd ~/.Trash'
+alias volumes='cd /Volumes'
+
+# Environment variables
+alias envpath='echo -e ${PATH//:/\\n}'
+alias envshell='echo -e ${SHELL//:/\\n}'
+
+# Start calculator with math support
+alias bc='bc -l'
+
+# Make mount command output pretty and human readable format
+alias mount='mount |column -t'
+
+# Date
+alias now='date -u +"%Y-%m-%dT%H:%M:%SZ"'
+alias nowtime='date -u +"%T"'
+alias nowdate='date -u +"%Y-%m-%d"'
+alias nowtz='date -u +"%z"'
+
+# Show open ports
+alias ports='netstat -lanp'
+
+# Shortcut for iptables and pass it via sudo
+alias myip='ifconfig en0 |awk "/inet / {print $2; }"'
+alias wanip='dig +short myip.opendns.com @resolver1.opendns.com'
+# Mac addresses
+alias macs='ifconfig | awk "/ether/{print $2}"'
+
+# Generate digest
+alias sha1='openssl sha1'
+alias sha256='openssl sha256'
+alias sha384='openssl sha384'
+alias sha512='openssl sha512'
+
+# Install software with brew
+alias insta='brew install'
+alias uninsta='brew uninstall'
+
+# minio-mc client https://github.com/minio/mc
+alias mc='minio-mc-nsg'
+alias cloud='minio-mc-nsg'
+
+# Tor & torsocks
+alias torstart='brew upgrade tor && brew services start tor'
+alias torstop='brew services stop tor'
+alias torrenew='brew services reload tor'
+alias torsockson='brew services torsocks on'
+alias torsocksoff='brew services torsocks off'
+torcheck() { curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IsTor'])" }
+torip() { curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IP'])" }
+
+# Wireguard
+alias wgstart='wg-quick up'
+alias wgstop='wg-quick down'
+
+alias lsbdevice='system_profiler SPUSBDataType'
+
+## Functions
+
+# Password generator
+pass() {
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "❓\e[33m\e[3mHelp:\e[m \e[35mpwgen -ys \e[34m{length}\e[m"
+  elif [[ $1 =~ ^[0-9]+$ ]]; then
+    openssl rand -base64 $1
+  else
+    openssl rand -base64 $(jot -r 1 40 60)
+  fi
+}
+
+# SSH connect by private key
+sshk() {
+  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "❓\e[33m\e[3mHelp:\e[m \e[35mssh -i \e[36m[~/.ssh/]\e[34m{key} {command}\e[m"
+  elif [ -r "$1" ]; then
+    KEY=$1
+  else
+    KEY=~/.ssh/$1
+  fi
+  ssh -i $KEY $2
+}
+
+# Generate SSH key
+sshgen() {
+  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "❓\e[33m\e[3mHelp:\e[m \e[35mssh-keygen -t rsa -b 4096 -f \e[36m[~/.ssh/]\e[34m{key}\e[35m -C \e[34m\"{e-mail}\"\e[m"
+  elif [ $1 =~ .*/.+ ]; then
+    KEY=$1
+  else
+    KEY=~/.ssh/$1
+  fi
+  ssh-keygen -t rsa -b 4096 -f $KEY -C "$2"
+}
+
+# Add SSH key to server
+sshcopy() {
+  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "❓\e[33m\e[3mHelp:\e[m \e[35mssh-copy-id -i \e[36m[~/.ssh/]\e[34m{key} {command}\e[m"
+  elif [ $1 =~ .*/.+ ]; then
+    KEY=$1
+  else
+    KEY=~/.ssh/$1
+  fi
+  ssh-copy-id -i $KEY $2
+}
+
+# Generate GPG key
+alias gpggen='gpg --default-new-key-algo rsa4096 --gen-key'
+alias gpggenpass=' echo "Passphrase: " && echo pass | gpg --default-new-key-algo rsa4096 --gen-key --passphrase-fd 0 && read -p "Proceed with clearing screen - press any key" && clear && printf "\e[3J"'
+
+# Run Git with specific SSH key
+gitk() {
+  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "❓\e[33m\e[3mHelp:\e[m \e[35mssh-agent bash -c \"ssh-add \e[34m{key}\e[35m; \e[34m{command}\e[35m\"\e[m"
+  elif [ -r "$1" ]; then
+    KEY=$1
+  else
+    KEY=~/.ssh/$1
+  fi
+  ssh-agent bash -c "ssh-add $KEY; $COMMAND"
+}
+
+# OS Version
+os() {
+  if [ "$1" = "-i" ] || [ "$1" = "--id" ]; then
+    uname -s
+  elif [ "$1" = "-d" ] || [ "$1" = "--description" ]; then
+    uname -v
+  elif [ "$1" = "-r" ] || [ "$1" = "--release" ]; then
+    uname -r
+  elif [ "$1" = "-a" ] || [ "$1" = "--all" ]; then
+    uname -a
+  else
+    echo "$(/usr/libexec/PlistBuddy -c "Print:ProductName" /System/Library/CoreServices/SystemVersion.plist)\t$(uname -r)"
+  fi
+}
+
+# Check SHA256SUM
+sha256verify() {
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "❓\e[33m\e[3mHelp:\e[m \e[35msha256sum -c \e[34m{file}\e[m"
+  elif [ -r "$1" ]; then
+    sha256sum -c $1 2>&1 | grep VERIFIED
+  else
+    sha256sum -c SHA256SUMS 2>&1 | grep VERIFIED
+  fi
+}
+
+# Check SHA512SUM
+sha512verify() {
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "❓\e[33m\e[3mHelp:\e[m \e[35msha512sum -c \e[34m{file}\e[m"
+  elif [ -r "$1" ]; then
+    sha512sum -c $1 2>&1 | grep VERIFIED
+  else
+    sha512sum -c SHA512SUMS 2>&1 | grep VERIFIED
+  fi
+}
+
+## Greeting
+hello() {
+  clear
+  echo "\033[1;33m★ Per aspera ad astra\n"
+  echo "\033[1;34mWelcome $(id -un)\n"
+  echo "\033[0;34mToday is \033[1;36m$(date "+%c")"
+  echo "\033[0;34mYou are working on:"
+  echo "\033[1;36m\t$(sysctl hw.model | cut -d ' ' -f 2)"
+  echo "\tOS: $(os) / Arch: $(uname -p)\033[0m"
+  echo "\033[0;34mYour IP address: \033[1;36m$(myip)\033[0m"
+  echo "\033[0m\nEnter ↵"
+  read -t 120
+  clear
+}
+
+###XCORE-###
