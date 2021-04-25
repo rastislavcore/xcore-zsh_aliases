@@ -43,9 +43,9 @@ fi
 
 2. Run command
 
-> Please, make attention that your current `~/.zsh_aliases` will be replaced.
+> Please, make attention that your current `~/.zsh_aliases` will be modified.
 
-> Linux
+### Linux
 
 Using Wget:
 
@@ -56,10 +56,10 @@ wget https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_alia
 or cURL:
 
 ```sh
-curl https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-linux > ~/.zsh_aliases
+curl -sS https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-linux >> ~/.zsh_aliases
 ```
 
-> macOS
+### macOS
 
 
 Using Wget:
@@ -71,7 +71,7 @@ wget https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_alia
 or cURL:
 
 ```sh
-curl https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-darwin > ~/.zsh_aliases
+curl -sS https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-darwin >> ~/.zsh_aliases
 ```
 
 ## Contribution
