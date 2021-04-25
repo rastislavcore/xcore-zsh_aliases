@@ -2,11 +2,6 @@
 ## sudo alias
 alias sudo='sudo '
 
-# Use color
-alias dir="dir --color=auto"
-alias grep="grep --color=auto"
-alias dmesg='dmesg --color'
-
 # Extended listing
 alias lst='ls --color=auto'
 alias ls='ls -hAF --color=auto'
@@ -23,6 +18,9 @@ alias df='df -h'
 
 # switch user
 alias switchuser='su'
+
+# reload zsh
+alias reload='zsh --login'
 
 # Top alias
 alias top='htop'
@@ -104,16 +102,12 @@ torip() { curl -s https://check.torproject.org/api/ip | python3 -c "import sys, 
 alias wgstart='wg-quick up'
 alias wgstop='wg-quick down'
 
-## Functions
-
 # Password generator
 pass() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35mpwgen -ys \e[34m{length}\e[m"
-  elif [[ $1 =~ ^[0-9]+$ ]]; then
-    pwgen -ys $1 1
+  if [[ $1 =~ ^[0-9]+$ ]]; then
+    LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c $1 | xargs
   else
-    pwgen -ys $(shuf -n 1 -i 40-60) 1
+    LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c $(jot -r 1 50 80) | xargs
   fi
 }
 
@@ -224,9 +218,9 @@ sha256verify() {
   if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "❓\e[33m\e[3mHelp:\e[m \e[35msha256sum -c \e[34m{file}\e[m"
   elif [ -r "$1" ]; then
-    sha256sum -c $1 2>&1 | grep VERIFIED
+    sha256sum -c $1 2>&1 | awk '/VERIFIED/'
   else
-    sha256sum -c SHA256SUMS 2>&1 | grep VERIFIED
+    sha256sum -c SHA256SUMS 2>&1 | awk '/VERIFIED/'
   fi
 }
 
@@ -235,16 +229,15 @@ sha512verify() {
   if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     echo "❓\e[33m\e[3mHelp:\e[m \e[35msha512sum -c \e[34m{file}\e[m"
   elif [ -r "$1" ]; then
-    sha512sum -c $1 2>&1 | grep VERIFIED
+    sha512sum -c $1 2>&1 | awk '/VERIFIED/'
   else
-    sha512sum -c SHA512SUMS 2>&1 | grep VERIFIED
+    sha512sum -c SHA512SUMS 2>&1 | awk '/VERIFIED/'
   fi
 }
 
 ## Greeting
 hello() {
   clear
-  echo "\033[1;33m★ Per aspera ad astra\n"
   echo "\033[1;34mWelcome $USER\n"
   echo "\033[0;34mToday is \033[1;36m$(date "+%c")"
   echo "\033[0;34mYou are working on:"
