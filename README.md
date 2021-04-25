@@ -15,14 +15,12 @@
 ### Applications
 
 - [Zsh](https://www.zsh.org/)
-- [pwgen](https://linux.die.net/man/1/pwgen) (if you want use it)
 - [minio client](https://docs.min.io/docs/minio-quickstart-guide.html) (if you want use it)
 - [git](https://git-scm.com/download/linux) (optional)
 - [Oh My Zsh](https://ohmyz.sh/) (optional)
 - [Wireguard](https://www.wireguard.com) (optional)
 - [Tor](https://www.torproject.org) (optional)
 - [TorGhostNG](https://github.com/GitHackTools/TorghostNG) (optional)
-- [Firefox](https://www.mozilla.org/en-US/firefox/browsers) (optional)
 - [Privoxy](https://www.privoxy.org) (good to have with Tor)
 
 ## Installation
