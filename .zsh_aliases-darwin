@@ -82,8 +82,7 @@ alias insta='brew install'
 alias uninsta='brew uninstall'
 
 # minio-mc client https://github.com/minio/mc
-alias mc='minio-mc-nsg'
-alias cloud='minio-mc-nsg'
+alias cloud='mc'
 
 # Tor & torsocks
 alias torstart='brew upgrade tor && brew services start tor'
