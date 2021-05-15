@@ -82,7 +82,27 @@ alias insta='brew install'
 alias uninsta='brew uninstall'
 
 # minio-mc client https://github.com/minio/mc
-alias cloud='mc'
+cloud() {
+  if [ -z "$MC_HOST_s3" ]; then
+    S3CENTRY=$(security 2>&1 find-internet-password -gj "s3cloud")
+    security lock-keychain
+    if [ -n "$S3CENTRY" ]; then
+      S3CAK=$(echo "$S3CENTRY" |& awk 'BEGIN{FS="\042"} /acct/ {print $4}')
+      S3CSK=$(echo "$S3CENTRY" |& awk 'BEGIN{FS="\042"} /password/ {print $2}')
+      S3CEND=$(echo "$S3CENTRY" |& awk 'BEGIN{FS="\042"} /srvr/ {print $4}')
+      S3CENTRY=""
+      MC_HOST_s3="https://$S3CAK:$S3CSK@$S3CEND"
+      S3CAK=""
+      S3CSK=""
+      S3CEND=""
+      mc $*
+    else
+      echo "❗\e[33m\e[3mError:\e[m Cloud couldn't establish the connection."
+    fi
+  else
+    mc $*
+  fi
+}
 
 # Tor & torsocks
 alias torstart='brew upgrade tor && brew services start tor'
