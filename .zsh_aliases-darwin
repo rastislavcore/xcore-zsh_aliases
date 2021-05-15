@@ -83,7 +83,9 @@ alias uninsta='brew uninstall'
 
 # minio-mc client https://github.com/minio/mc
 cloud() {
-  if [ -z "$MC_HOST_s3" ]; then
+  if [ $# -le 1 ]; then
+    mc $*
+  elif [ -z "$MC_HOST_s3" ]; then
     S3CENTRY=$(security 2>&1 find-internet-password -gj "s3cloud")
     security lock-keychain
     if [ -n "$S3CENTRY" ]; then
