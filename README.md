@@ -74,6 +74,18 @@ or cURL:
 curl -sS https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-darwin >> ~/.zsh_aliases
 ```
 
+### Enabling cloud with Minio client
+
+You have to enter the connection settings into your keychain and description `s3cloud`.
+
+Console command:
+
+```sh
+security add-internet-password -ls $PROVIDER -a $AKEY -w $SKEY -r "https" -j "s3cloud"
+```
+
+> replace `$PROVIDER`, `$AKEY` and `$SKEY` with your settings.
+
 ## Contribution
 
 Feel free to distribute, copy, contribute, comment, change the content. Fork and comments welcome.
