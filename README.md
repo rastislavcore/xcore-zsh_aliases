@@ -81,10 +81,11 @@ You have to enter the connection settings into your keychain and description `s3
 Console command:
 
 ```sh
-security add-internet-password -ls $PROVIDER -a $AKEY -w $SKEY -r "https" -j "s3cloud"
+security add-internet-password -s "play.min.io" -l "play.min.io" -a "akey" -r "htps" -j "s3cloud" -w "skey"
 ```
 
-> replace `$PROVIDER`, `$AKEY` and `$SKEY` with your settings.
+> replace `akey`, `skey` and `provider (play.min.io)` with your settings.
+> The script is counting only with one default cloud provider due to security concerns. But you are free to raise PR if you have solution.
 
 ## Contribution
 
