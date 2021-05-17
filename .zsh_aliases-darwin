@@ -93,7 +93,7 @@ cloud() {
       S3CSK=$(echo "$S3CENTRY" |& awk 'BEGIN{FS="\042"} /password/ {print $2}')
       S3CEND=$(echo "$S3CENTRY" |& awk 'BEGIN{FS="\042"} /srvr/ {print $4}')
       S3CENTRY=""
-      MC_HOST_s3="https://$S3CAK:$S3CSK@$S3CEND"
+      export MC_HOST_s3="https://$S3CAK:$S3CSK@$S3CEND"
       S3CAK=""
       S3CSK=""
       S3CEND=""
