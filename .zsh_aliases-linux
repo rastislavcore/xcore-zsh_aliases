@@ -7,27 +7,38 @@ alias lst='ls --color=auto'
 alias ls='ls -hAF --color=auto'
 alias lsr='ls -hAlF --color=auto'
 
-# ensure remove confirmations
+# Ensure remove confirmations
 alias remove='rm -rfI'
 
 # Rename file
 alias rename='mv'
 
-# human readable df
+# Human readable df
 alias df='df -h'
 
-# switch user
+# Switch user
 alias switchuser='su'
 
-# reload zsh
+# Reload zsh
 alias reload='zsh --login'
 
 # Top alias
-alias top='htop'
+top() {
+  if command -v htop >/dev/null 2>&1; then
+    htop
+  else
+    command top
+  fi
+}
 
 # All is micro editor
-alias nano='micro'
-alias edit='micro'
+edit() {
+  if command -v micro >/dev/null 2>&1; then
+    micro "$@"
+  else
+    nano "$@"
+  fi
+}
 
 # Paths
 alias path='pwd'
@@ -37,14 +48,9 @@ alias ...='cd ../../../'
 alias ....='cd ../../../../'
 alias .....='cd ../../../../../'
 alias home='cd ~/'
-alias desktop='cd ~/Desktop'
-alias documents='cd ~/Documents'
-alias downloads='cd ~/Downloads'
-alias music='cd ~/Music'
-alias pictures='cd ~/Pictures'
-alias videos='cd ~/Videos'
-alias trash='cd ~/.local/share/Trash/files'
-alias media='cd /media/$(whoami)'
+
+# List of USB devices
+alias usbdevices='lsusb'
 
 # Environment variables
 alias envpath='echo -e ${PATH//:/\\n}'
@@ -54,22 +60,22 @@ alias envshell='echo -e ${SHELL//:/\\n}'
 alias bc='bc -l'
 
 # Make mount command output pretty and human readable format
-alias mount='mount |column -t'
+alias mount='mount | column -t'
 
 # Date
-alias now='date -Is'
-alias nowtime='date +"%T"'
-alias nowdate='date +"%Y-%m-%d"'
-alias nowtz='date +"%z"'
+alias now='date -u +"%Y-%m-%dT%H:%M:%SZ"'
+alias nowtime='date -u +"%T"'
+alias nowdate='date -u +"%Y-%m-%d"'
+alias nowtz='date -u +"%z"'
 
 # Show open ports
-alias ports='netstat -tulanp'
+alias ports='netstat -tuln'
 
 # Shortcut for iptables and pass it via sudo
-alias myip='hostname -I'
 alias wanip='dig +short myip.opendns.com @resolver1.opendns.com'
+
 # Mac addresses
-alias macs='cat /sys/class/net/*/address'
+alias macs='ip link | awk "/ether/ {print \$2}"'
 
 # Generate digest
 alias sha1='openssl sha1'
@@ -77,115 +83,95 @@ alias sha256='openssl sha256'
 alias sha384='openssl sha384'
 alias sha512='openssl sha512'
 
-# Install software with apt
-alias insta='sudo apt update && sudo apt install -y'
-alias uninsta='sudo apt purge -y'
-
-# minio-mc client https://github.com/minio/mc
-alias mc='minio-mc-nsg'
-alias cloud='minio-mc-nsg'
-
-# Tor & torsocks & Ghost
-alias torstart='systemctl start tor'
-alias torstop='systemctl stop tor'
-alias torrenew='systemctl reload tor'
-alias ghost='torghostng'
-alias ghoststart='torghostng -s -m'
-alias ghoststop='torghostng -x'
-alias ghostrenew='torghostng -r'
-alias torsockson='source torsocks on'
-alias torsocksoff='source torsocks off'
-torcheck() { curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IsTor'])" }
-torip() { curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IP'])" }
-
-# Wireguard
-alias wgstart='wg-quick up'
-alias wgstop='wg-quick down'
+# Tor & torsocks
+alias torstart='sudo systemctl start tor'
+alias torstop='sudo systemctl stop tor'
+alias torrenew='sudo systemctl reload tor'
+alias torsockson='torsocks on'
+alias torsocksoff='torsocks off'
+torcheck() {
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: torcheck"
+    echo "Check if the current IP is using Tor."
+  else
+    curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IsTor'])"
+  fi
+}
+torip() {
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: torip"
+    echo "Get the current IP using Tor."
+  else
+    curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IP'])"
+  fi
+}
 
 # Password generator
 pass() {
-  if [[ $1 =~ ^[0-9]+$ ]]; then
-    LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c $1 | xargs
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: pass [LENGTH]"
+    echo "Generate a random password."
+    echo "If LENGTH is provided, generate a password of that length."
+    echo "Otherwise, generate a password between 50 and 80 characters long."
+  elif [[ $1 =~ ^[0-9]+$ ]]; then
+    LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c "$1" | xargs
   else
-    LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c $(jot -r 1 50 80) | xargs
+    LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c "$(shuf -i 50-80 -n 1)" | xargs
   fi
 }
 
 # SSH connect by private key
 sshk() {
-  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35mssh -i \e[36m[~/.ssh/]\e[34m{key} {command}\e[m"
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: sshk [KEY] [COMMAND]"
+    echo "Connect to a server using SSH with a specified private key."
   elif [ -r "$1" ]; then
     KEY=$1
   else
     KEY=~/.ssh/$1
   fi
-  ssh -i $KEY $2
+  ssh -i "$KEY" "$2"
 }
 
 # Generate SSH key
 sshgen() {
-  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35mssh-keygen -t rsa -b 4096 -f \e[36m[~/.ssh/]\e[34m{key}\e[35m -C \e[34m\"{e-mail}\"\e[m"
-  elif [ $1 =~ .*/.+ ]; then
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: sshgen [KEY] [EMAIL]"
+    echo "Generate a new SSH key pair."
+    echo "If KEY is provided, use it as the key name."
+    echo "Otherwise, use the default key name."
+  elif [[ $1 =~ .*/.+ ]]; then
     KEY=$1
   else
     KEY=~/.ssh/$1
   fi
-  ssh-keygen -t rsa -b 4096 -f $KEY -C "$2"
+  ssh-keygen -t rsa -b 4096 -f "$KEY" -C "$2"
 }
 
 # Add SSH key to server
 sshcopy() {
-  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35mssh-copy-id -i \e[36m[~/.ssh/]\e[34m{key} {command}\e[m"
-  elif [ $1 =~ .*/.+ ]; then
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: sshcopy [KEY] [USER@HOST]"
+    echo "Copy an SSH key to a server."
+    echo "If KEY is provided, use it as the key name."
+    echo "Otherwise, use the default key name."
+  elif [[ $1 =~ .*/.+ ]]; then
     KEY=$1
   else
     KEY=~/.ssh/$1
   fi
-  ssh-copy-id -i $KEY $2
+  ssh-copy-id -i "$KEY" "$2"
 }
 
 # Generate GPG key
 alias gpggen='gpg --default-new-key-algo rsa4096 --gen-key'
-alias gpggenpass=' echo "Passphrase: " && echo pass | gpg --default-new-key-algo rsa4096 --gen-key --passphrase-fd 0 && read -p "Proceed with clearing screen - press any key" && clear && printf "\e[3J"'
-
-# List devices
-lsdevice() {
-  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35mlsblk -dp -x SIZE -o \e[36m[NAME,TRAN,TYPE,SIZE]\e[34m{2) output}\e[35m | grep -A 1 -w \e[36m[USB]\e[34m{1) device}\e[m"
-  elif [ -z "$1" ]; then
-    DEVICE=USB
-  else
-    DEVICE=$1
-  fi
-  if [ -z "$2" ]; then
-    OUTPUT=NAME,TRAN,TYPE,SIZE
-  else
-    OUTPUT=$2
-  fi
-  lsblk -dp -x SIZE -o $OUTPUT | grep -A 1 -w $DEVICE
-}
-
-# Create disk from image
-mkstick() {
-  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35msudo umount \e[34m{mount}\e[35m && sudo dd bs=4M if=\e[34m{image}\e[35m of=\e[34m{mount}\e[35m conv=fdatasync status=progress\e[m"
-  elif [ ! -x "$(lsblk -dpn -o NAME,TRAN | grep -A 1 -w usb | grep -A 0 -w $1)" ]; then
-    echo "❌ \e[31m\e[3mError:\e[m Device is not USB on this mounting point\e[m"
-    exit
-  elif [ ! -r "$2" ]; then
-    echo "❌ \e[31m\e[3mError:\e[m Cannot read image file\e[m"
-    exit
-  fi
-  sudo umount $1 && sudo dd bs=4M if=$2 of=$1 conv=fdatasync status=progress
-}
+alias gpggenpass='echo "Passphrase: " && echo pass | gpg --default-new-key-algo rsa4096 --gen-key --passphrase-fd 0 && read -p "Proceed with clearing screen - press any key" && clear && printf "\e[3J"'
 
 # Run Git with specific SSH key
 gitk() {
-  if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35mssh-agent bash -c \"ssh-add \e[34m{key}\e[35m; \e[34m{command}\e[35m\"\e[m"
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    echo "Usage: gitk [KEY] [COMMAND]"
+    echo "Run a Git command using a specific SSH key."
   elif [ -r "$1" ]; then
     KEY=$1
   else
@@ -197,16 +183,20 @@ gitk() {
 # OS Version
 os() {
   if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35mlsb_release \e[34m{command: -i,-d,-r,-c,-a}\e[35m | cut -f2-\e[m"
-  elif [ "$1" = "-i" ] || [ "$1" = "--id" ]; then
+    echo "Usage: os [OPTION]"
+    echo "Display OS version information."
+    echo "Options:"
+    echo "  -i, --id          Display system name"
+    echo "  -d, --description Display description"
+    echo "  -r, --release     Display release number"
+    echo "  -a, --all         Display all information"
+  elif [ "$1" = "-i" ]; then
     lsb_release -i | cut -f2-
-  elif [ "$1" = "-d" ] || [ "$1" = "--description" ]; then
+  elif [ "$1" = "-d" ]; then
     lsb_release -d | cut -f2-
-  elif [ "$1" = "-r" ] || [ "$1" = "--release" ]; then
+  elif [ "$1" = "-r" ]; then
     lsb_release -r | cut -f2-
-  elif [ "$1" = "-c" ] || [ "$1" = "--codename" ]; then
-    lsb_release -c | cut -f2-
-  elif [ "$1" = "-a" ] || [ "$1" = "--all" ]; then
+  elif [ "$1" = "-a" ]; then
     lsb_release -a | cut -f2-
   else
     lsb_release -d | cut -f2-
@@ -216,9 +206,12 @@ os() {
 # Check SHA256SUM
 sha256verify() {
   if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35msha256sum -c \e[34m{file}\e[m"
+    echo "Usage: sha256verify [FILE]"
+    echo "Verify SHA256 checksum."
+    echo "If FILE is provided, verify it."
+    echo "Otherwise, verify SHA256SUMS file."
   elif [ -r "$1" ]; then
-    sha256sum -c $1 2>&1 | awk '/VERIFIED/'
+    sha256sum -c "$1" 2>&1 | awk '/VERIFIED/'
   else
     sha256sum -c SHA256SUMS 2>&1 | awk '/VERIFIED/'
   fi
@@ -227,9 +220,12 @@ sha256verify() {
 # Check SHA512SUM
 sha512verify() {
   if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "❓\e[33m\e[3mHelp:\e[m \e[35msha512sum -c \e[34m{file}\e[m"
+    echo "Usage: sha512verify [FILE]"
+    echo "Verify SHA512 checksum."
+    echo "If FILE is provided, verify it."
+    echo "Otherwise, verify SHA512SUMS file."
   elif [ -r "$1" ]; then
-    sha512sum -c $1 2>&1 | awk '/VERIFIED/'
+    sha512sum -c "$1" 2>&1 | awk '/VERIFIED/'
   else
     sha512sum -c SHA512SUMS 2>&1 | awk '/VERIFIED/'
   fi
@@ -243,10 +239,9 @@ hello() {
   echo "\033[0;34mYou are working on:"
   echo "\033[1;36m\t$(cat /sys/devices/virtual/dmi/id/sys_vendor) - $(cat /sys/devices/virtual/dmi/id/product_name)"
   echo "\tOS: $(os) / Arch: $(uname -p)\033[0m"
-  echo "\033[0;34mYour IP address: \033[1;36m$(myip)\033[0m"
+  echo "\033[0;34mYour IP address: \033[1;36m$(hostname -I | awk '{print $1}')\033[0m"
   echo "\033[0m\nEnter ↵"
   read -t 120
   clear
 }
-
 ###XCORE-###

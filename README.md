@@ -1,3 +1,4 @@
+
 # XCORE Zsh Aliases
 
 > For wealth and prosperity of the population.
@@ -7,25 +8,24 @@
 ### OS
 
 - Linux
-   - Ubuntu
+  - Ubuntu
 - macOS
-   - Catalina
-   - Big Sur
+  - Catalina
+  - Big Sur
+  - Sonoma
 
 ### Applications
 
 - [Zsh](https://www.zsh.org/)
-- [minio client](https://docs.min.io/docs/minio-quickstart-guide.html) (if you want use it)
 - [git](https://git-scm.com/download/linux) (optional)
 - [Oh My Zsh](https://ohmyz.sh/) (optional)
-- [Wireguard](https://www.wireguard.com) (optional)
 - [Tor](https://www.torproject.org) (optional)
 - [TorGhostNG](https://github.com/GitHackTools/TorghostNG) (optional)
 - [Privoxy](https://www.privoxy.org) (good to have with Tor)
 
 ## Installation
 
-1. Add aliases (skip if added)
+### Add aliases (skip if added)
 
 > Add aliases link to `.zshrc` file.
 
@@ -41,7 +41,7 @@ if [ -f ~/.zsh_aliases ]; then
 fi
 ```
 
-2. Run command
+### Run command
 
 > Please, make attention that your current `~/.zsh_aliases` will be modified.
 
@@ -61,7 +61,6 @@ curl -sS https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_
 
 ### macOS
 
-
 Using Wget:
 
 ```sh
@@ -73,19 +72,6 @@ or cURL:
 ```sh
 curl -sS https://raw.githubusercontent.com/raisty/xcore-zsh_aliases/master/.zsh_aliases-darwin >> ~/.zsh_aliases
 ```
-
-### Enabling cloud with Minio client
-
-You have to enter the connection settings into your keychain and description `s3cloud`.
-
-Console command:
-
-```sh
-security add-internet-password -s "play.min.io" -l "play.min.io" -a "akey" -r "htps" -j "s3cloud" -w "skey"
-```
-
-> replace `akey`, `skey` and `provider (play.min.io)` with your settings.
-> The script is counting only with one default cloud provider due to security concerns. But you are free to raise PR if you have solution.
 
 ## Contribution
 
@@ -106,12 +92,3 @@ Config for your computer proxy:
 ## License
 
 [WTFPL](LICENSE)
-
-## Support
-
-Consider supporting my work with [Bitcoin][btc], [Litecoin][ltc], [Ethereum][eth], or here on [Github][gh].
-
-[btc]: https://pay.btc.horse#bitcoin:37iSWX4QdoayZXmuj13AExuhzSkfd7LuG6
-[ltc]: https://pay.btc.horse#litecoin:M8bEQNPkZ66hoFGYJuMVntyjj9dmYo1wBf
-[eth]: https://pay.btc.horse#ethereum:0x10c993039CC831A1fe8230ddd82A0A13625Dd43E
-[gh]: https://github.com/sponsors/raisty
