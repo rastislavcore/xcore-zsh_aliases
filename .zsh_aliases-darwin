@@ -24,20 +24,20 @@ alias reload='zsh --login'
 
 # Top alias
 top() {
-  if command -v htop >/dev/null 2>&1; then
-    htop
-  else
-    command top
-  fi
+	if command -v htop >/dev/null 2>&1; then
+		htop
+	else
+		command top
+	fi
 }
 
 # All is micro editor
 edit() {
-  if command -v micro >/dev/null 2>&1; then
-    micro "$@"
-  else
-    nano "$@"
-  fi
+	if command -v micro >/dev/null 2>&1; then
+		micro "$@"
+	else
+		nano "$@"
+	fi
 }
 
 # Paths
@@ -89,78 +89,83 @@ alias torstop='brew services stop tor'
 alias torrenew='brew services reload tor'
 alias torsockson='brew services torsocks on'
 alias torsocksoff='brew services torsocks off'
+
 torcheck() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: torcheck"
-    echo "Check if the current IP is using Tor."
-  else
-    curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IsTor'])"
-  fi
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: torcheck"
+		echo "Check if the current IP is using Tor."
+	else
+		curl --max-time 10 -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IsTor'])"
+	fi
 }
+
 torip() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: torip"
-    echo "Get the current IP using Tor."
-  else
-    curl -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IP'])"
-  fi
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: torip"
+		echo "Get the current IP using Tor."
+	else
+		curl --max-time 10 -s https://check.torproject.org/api/ip | python3 -c "import sys, json; print(json.load(sys.stdin)['IP'])"
+	fi
 }
 
 # Password generator
 pass() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: pass [LENGTH]"
-    echo "Generate a random password."
-    echo "If LENGTH is provided, generate a password of that length."
-    echo "Otherwise, generate a password between 50 and 80 characters long."
-  elif [[ $1 =~ ^[0-9]+$ ]]; then
-    LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c "$1" | xargs
-  else
-    LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c "$(jot -r 1 50 80)" | xargs
-  fi
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: pass [LENGTH]"
+		echo "Generate a random password."
+		echo "If LENGTH is provided, generate a password of that length."
+		echo "Otherwise, generate a password between 50 and 80 characters long."
+	elif [[ $1 =~ ^[0-9]+$ ]]; then
+		LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c "$1" | xargs
+	else
+		LC_ALL=C tr -dc 'A-Za-z0-9!"#$%&'\''()*+,-./:;<=>?@[\]^_`{|}~' < /dev/urandom | head -c "$(jot -r 1 50 80)" | xargs
+	fi
 }
 
 # SSH connect by private key
 sshk() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: sshk [KEY] [COMMAND]"
-    echo "Connect to a server using SSH with a specified private key."
-  elif [ -r "$1" ]; then
-    KEY=$1
-  else
-    KEY=~/.ssh/$1
-  fi
-  ssh -i "$KEY" "$2"
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: sshk [KEY] [USER@HOST]"
+		echo "Connect to a server using SSH with a specified private key."
+	elif [ -z "$1" ] || [ -z "$2" ]; then
+		echo "Error: Both [KEY] and [USER@HOST] must be provided."
+		return 1
+	elif [ -r "$1" ]; then
+		ssh -i "$1" "$2"
+	else
+		echo "Error: Key file not found or inaccessible."
+		return 1
+	fi
 }
 
 # Generate SSH key
 sshgen() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: sshgen [KEY] [EMAIL]"
-    echo "Generate a new SSH key pair."
-    echo "If KEY is provided, use it as the key name."
-    echo "Otherwise, use the default key name."
-  elif [[ $1 =~ .*/.+ ]]; then
-    KEY=$1
-  else
-    KEY=~/.ssh/$1
-  fi
-  ssh-keygen -t rsa -b 4096 -f "$KEY" -C "$2"
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: sshgen [KEY] [EMAIL]"
+		echo "Generate a new SSH key pair."
+		echo "If KEY is provided, use it as the key name."
+		echo "Otherwise, use the default key name."
+	elif [[ $1 =~ .*/.+ ]]; then
+		KEY=$1
+	else
+		KEY=~/.ssh/$1
+	fi
+	ssh-keygen -t rsa -b 4096 -f "$KEY" -C "$2"
 }
 
 # Add SSH key to server
 sshcopy() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: sshcopy [KEY] [USER@HOST]"
-    echo "Copy an SSH key to a server."
-    echo "If KEY is provided, use it as the key name."
-    echo "Otherwise, use the default key name."
-  elif [[ $1 =~ .*/.+ ]]; then
-    KEY=$1
-  else
-    KEY=~/.ssh/$1
-  fi
-  ssh-copy-id -i "$KEY" "$2"
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: sshcopy [KEY] [USER@HOST]"
+		echo "Copy an SSH key to a server."
+		echo "If KEY is provided, use it as the key name."
+		echo "Otherwise, use the default key name."
+	elif [[ $1 =~ .*/.+ ]]; then
+		KEY=$1
+	else
+		KEY=~/.ssh/$1
+	fi
+	ssh-copy-id -i "$KEY" "$2"
 }
 
 # Generate GPG key
@@ -169,76 +174,76 @@ alias gpggenpass='echo "Passphrase: " && echo pass | gpg --default-new-key-algo 
 
 # Run Git with specific SSH key
 gitk() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: gitk [KEY] [COMMAND]"
-    echo "Run a Git command using a specific SSH key."
-  elif [ -r "$1" ]; then
-    KEY=$1
-  else
-    KEY=~/.ssh/$1
-  fi
-  ssh-agent bash -c "ssh-add $KEY; $COMMAND"
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: gitk [KEY] [COMMAND]"
+		echo "Run a Git command using a specific SSH key."
+	elif [ -r "$1" ]; then
+		KEY=$1
+	else
+		KEY=~/.ssh/$1
+	fi
+	ssh-agent bash -c "ssh-add $KEY; $COMMAND"
 }
 
 # OS Version
 os() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: os [OPTION]"
-    echo "Display OS version information."
-    echo "Options:"
-    echo "  -i, --id          Display system name"
-    echo "  -d, --description Display description"
-    echo "  -r, --release     Display release number"
-    echo "  -a, --all         Display all information"
-  elif [ "$1" = "-i" ]; then
-    uname -s
-  elif [ "$1" = "-d" ]; then
-    uname -v
-  elif [ "$1" = "-r" ]; then
-    uname -r
-  elif [ "$1" = "-a" ]; then
-    uname -a
-  else
-    echo "$(/usr/libexec/PlistBuddy -c "Print:ProductName" /System/Library/CoreServices/SystemVersion.plist)\t$(uname -r)"
-  fi
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: os [OPTION]"
+		echo "Display OS version information."
+		echo "Options:"
+		echo "  -i, --id          Display system name"
+		echo "  -d, --description Display description"
+		echo "  -r, --release     Display release number"
+		echo "  -a, --all         Display all information"
+	elif [ "$1" = "-i" ]; then
+		uname -s
+	elif [ "$1" = "-d" ]; then
+		uname -v
+	elif [ "$1" = "-r" ]; then
+		uname -r
+	elif [ "$1" = "-a" ]; then
+		uname -a
+	else
+		echo "$(/usr/libexec/PlistBuddy -c "Print:ProductName" /System/Library/CoreServices/SystemVersion.plist)\t$(uname -r)"
+	fi
 }
 
 # Check SHA256SUM
 sha256verify() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: sha256verify [FILE]"
-    echo "Verify SHA256 checksum."
-    echo "If FILE is provided, verify it."
-    echo "Otherwise, verify SHA256SUMS file."
-  elif [ -r "$1" ]; then
-    sha256sum -c "$1" 2>&1 | awk '/VERIFIED/'
-  else
-    sha256sum -c SHA256SUMS 2>&1 | awk '/VERIFIED/'
-  fi
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: sha256verify [FILE]"
+		echo "Verify SHA256 checksum."
+		echo "If FILE is provided, verify it."
+		echo "Otherwise, verify SHA256SUMS file."
+	elif [ -r "$1" ]; then
+		sha256sum -c "$1" 2>&1 | awk '/VERIFIED/'
+	else
+		sha256sum -c SHA256SUMS 2>&1 | awk '/VERIFIED/'
+	fi
 }
 
 # Check SHA512SUM
 sha512verify() {
-  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-    echo "Usage: sha512verify [FILE]"
-    echo "Verify SHA512 checksum."
-    echo "If FILE is provided, verify it."
-    echo "Otherwise, verify SHA512SUMS file."
-  elif [ -r "$1" ]; then
-    sha512sum -c "$1" 2>&1 | awk '/VERIFIED/'
-  else
-    sha512sum -c SHA512SUMS 2>&1 | awk '/VERIFIED/'
-  fi
+	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+		echo "Usage: sha512verify [FILE]"
+		echo "Verify SHA512 checksum."
+		echo "If FILE is provided, verify it."
+		echo "Otherwise, verify SHA512SUMS file."
+	elif [ -r "$1" ]; then
+		sha512sum -c "$1" 2>&1 | awk '/VERIFIED/'
+	else
+		sha512sum -c SHA512SUMS 2>&1 | awk '/VERIFIED/'
+	fi
 }
 
 ## Greeting
 hello() {
-  clear
-  echo "\033[1;34mWelcome $(id -un)\n"
-  echo "\033[0;34mToday is \033[1;36m$(date "+%c")"
-  echo "\033[0;34mYou are working on:"
-  echo "\033[1;36m\t$(sysctl hw.model | cut -d ' ' -f 2)"
-  echo "\tOS: $(os) / Arch: $(uname -p)\033[0m"
+	clear
+	echo "\033[1;34mWelcome $(id -un)\n"
+	echo "\033[0;34mToday is \033[1;36m$(date "+%c")"
+	echo "\033[0;34mYou are working on:"
+	echo "\033[1;36m\t$(sysctl hw.model | cut -d ' ' -f 2)"
+	echo "\tOS: $(os) / Arch: $(uname -p)\033[0m"
 }
 
 ###XCORE-###
