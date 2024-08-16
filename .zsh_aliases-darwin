@@ -130,10 +130,12 @@ sshk() {
 	elif [ -z "$1" ] || [ -z "$2" ]; then
 		echo "Error: Both [KEY] and [USER@HOST] must be provided."
 		return 1
+	elif [ -r "$HOME/.ssh/$1" ]; then
+		ssh -i "$HOME/.ssh/$1" "$2"
 	elif [ -r "$1" ]; then
 		ssh -i "$1" "$2"
 	else
-		echo "Error: Key file not found or inaccessible."
+		echo "Error: Key file not found or inaccessible in ~/.ssh or the specified path."
 		return 1
 	fi
 }
