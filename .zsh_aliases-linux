@@ -127,12 +127,17 @@ sshk() {
 	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
 		echo "Usage: sshk [KEY] [USER@HOST]"
 		echo "Connect to a server using SSH with a specified private key."
+	elif [ -z "$1" ] || [ -z "$2" ]; then
+		echo "Error: Both [KEY] and [USER@HOST] must be provided."
+		return 1
+	elif [ -r "$HOME/.ssh/$1" ]; then
+		ssh -i "$HOME/.ssh/$1" "$2"
 	elif [ -r "$1" ]; then
-		KEY=$1
+		ssh -i "$1" "$2"
 	else
-		KEY=~/.ssh/$1
+		echo "Error: Key file not found or inaccessible in ~/.ssh or the specified path."
+		return 1
 	fi
-	ssh -i "$KEY" "$2"
 }
 
 # Generate SSH key
@@ -246,4 +251,5 @@ hello() {
 	read -t 120
 	clear
 }
+
 ###XCORE-###
