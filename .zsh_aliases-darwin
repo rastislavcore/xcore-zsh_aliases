@@ -171,8 +171,39 @@ sshcopy() {
 }
 
 # Generate GPG key
-alias gpggen='gpg --default-new-key-algo rsa4096 --gen-key'
-alias gpggenpass='echo "Passphrase: " && echo pass | gpg --default-new-key-algo rsa4096 --gen-key --passphrase-fd 0 && read -p "Proceed with clearing screen - press any key" && clear && printf "\e[3J"'
+alias gpg-gen='gpg --default-new-key-algo rsa4096 --gen-key'
+alias gpg-genpass='echo "Passphrase: " && echo pass | gpg --default-new-key-algo rsa4096 --gen-key --passphrase-fd 0 && read -p "Proceed with clearing screen - press any key" && clear && printf "\e[3J"'
+# GPG Encrypt
+gpg-encrypt() {
+	if [[ $# -ne 2 ]]; then
+		echo "Usage: gpg-encrypt recipient@example.com /path/to/file"
+		return 1
+	fi
+	local recipient="$1"
+	local file_path="$2"
+	local filename=$(basename -- "$file_path")
+	local output_file="${filename}.gpg"
+	gpg --output "$output_file" --encrypt --recipient "$recipient" "$file_path"
+	if [[ $? -eq 0 ]]; then
+		echo "File encrypted successfully: $output_file"
+	else
+		echo "Error encrypting the file."
+	fi
+}
+# GPG Decrypt
+gpg-decrypt() {
+	if [[ $# -ne 1 ]]; then
+		echo "Usage: gpg-decrypt /path/to/encrypted-file.gpg"
+		return 1
+	fi
+	local file_path="$1"
+	gpg --decrypt "$file_path"
+	if [[ $? -eq 0 ]]; then
+		echo "File decrypted successfully."
+	else
+		echo "Error decrypting the file."
+	fi
+}
 
 # Run Git with specific SSH key
 gitk() {
