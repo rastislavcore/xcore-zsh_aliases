@@ -152,7 +152,7 @@ sshgen() {
 	else
 		KEY=~/.ssh/$1
 	fi
-	ssh-keygen -t rsa -b 4096 -f "$KEY" -C "$2"
+	ssh-keygen -t ed25519 -f "$KEY" -C "$2" -Z aes256-gcm@openssh.com
 }
 
 # Add SSH key to server
