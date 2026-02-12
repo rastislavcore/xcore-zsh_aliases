@@ -1,0 +1,704 @@
+### XCORE+ (unified macOS + Linux) ###
+
+# -----------------------------
+# UI + Registry
+# -----------------------------
+_xcore_os="${_xcore_os:-$(uname -s 2>/dev/null)}"
+_xcore_is() { command -v "$1" >/dev/null 2>&1 }
+
+_xc_0=$'%{\e[0m%}'
+_xc_b=$'%{\e[1m%}'
+_xc_d=$'%{\e[2m%}'
+_xc_r=$'%{\e[31m%}'
+_xc_g=$'%{\e[32m%}'
+_xc_y=$'%{\e[33m%}'
+_xc_c=$'%{\e[36m%}'
+
+_xhr() { printf "%s\n" "────────────────────────────────────────────────────────────"; }
+_xt()  { printf "%s%s%s\n" "${_xc_b}${_xc_c}" "$*" "${_xc_0}"; }
+_xok() { printf "%s%s%s\n" "${_xc_g}" "$*" "${_xc_0}"; }
+_xwr() { printf "%s%s%s\n" "${_xc_y}" "$*" "${_xc_0}"; }
+_xer() { printf "%s%s%s\n" "${_xc_r}" "$*" "${_xc_0}" >&2; }
+
+typeset -gA _XHELP
+_xhelp_add() { _XHELP["$1"]="$2"; }
+
+xhelp() {
+	_xt "XCORE commands"
+	_xhr
+	local k
+	for k in ${(ok)_XHELP}; do
+		printf "%s%-14s%s %s\n" "${_xc_g}" "$k" "${_xc_0}" "${_XHELP[$k]}"
+	done
+	_xhr
+	printf "%sTip:%s add %s-h%s to most functions.\n" "${_xc_y}" "${_xc_0}" "${_xc_b}" "${_xc_0}"
+}
+_xhelp_add xhelp "Show this help list"
+
+# -----------------------------
+# Basic aliases
+# -----------------------------
+alias sudo='sudo '
+alias rename='mv'
+alias switchuser='su'
+alias reload='exec zsh -l'
+alias path='pwd'
+alias cd..='cd ..'
+alias ..='cd ..'
+alias ...='cd ../../../'
+alias ....='cd ../../../../'
+alias .....='cd ../../../../../'
+alias home='cd ~'
+alias df='df -h'
+alias bc='bc -l'
+alias envpath='print -r -- ${(ps/:/)PATH}'
+
+_xhelp_add reload  "Reload shell (exec zsh -l)"
+_xhelp_add envpath "Print PATH one entry per line"
+
+# -----------------------------
+# ls (auto GNU/BSD)
+# -----------------------------
+if ls --color=auto >/dev/null 2>&1; then
+	alias lst='ls --color=auto'
+	alias ls='ls -hAF --color=auto'
+	alias lsr='ls -hAlF --color=auto'
+else
+	alias lst='ls -G'
+	alias ls='ls -hAFG'
+	alias lsr='ls -hAlFG'
+fi
+
+_xhelp_add ls  "List files (human + classify + color)"
+_xhelp_add lsr "Long + all + human + classify + color"
+
+# -----------------------------
+# Safer remove
+# -----------------------------
+remove() {
+	local force=0
+	local -a args=()
+
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: remove [--force|-f] <paths...>
+	--force, -f	rm -rf (no prompts)
+Default: rm -rfI (one-time confirmation for big deletes)
+EOF
+				return 0
+				;;
+			--force|-f) force=1 ;;
+			--) shift; args+=("$@"); break ;;
+			*) args+=("$1") ;;
+		esac
+		shift
+	done
+
+	(( ${#args[@]} )) || { _xer "remove: missing paths (try --help)"; return 1; }
+	if (( force )); then
+		command rm -rf -- "${args[@]}"
+	else
+		command rm -rfI -- "${args[@]}"
+	fi
+}
+_xhelp_add remove "rm -rfI by default; use --force/-f for rm -rf"
+
+# -----------------------------
+# Editors + top
+# -----------------------------
+top() {
+	_xcore_is htop && command htop || command top
+}
+edit() {
+	_xcore_is micro && command micro "$@" || command nano "$@"
+}
+
+_xhelp_add top  "Use htop if available, else top"
+_xhelp_add edit "Use micro if available, else nano"
+
+# -----------------------------
+# Pretty mount (do not override mount)
+# -----------------------------
+mountt() {
+	_xcore_is column && command mount | column -t || command mount
+}
+_xhelp_add mountt "Pretty mount output (keeps mount untouched)"
+
+# -----------------------------
+# Date helpers (UTC)
+# -----------------------------
+alias now='date -u +"%Y-%m-%dT%H:%M:%SZ"'
+alias nowtime='date -u +"%T"'
+alias nowdate='date -u +"%Y-%m-%d"'
+alias nowtz='date -u +"%z"'
+
+_xhelp_add now     "UTC timestamp"
+_xhelp_add nowdate "UTC date"
+_xhelp_add nowtime "UTC time"
+_xhelp_add nowtz   "UTC offset"
+
+# -----------------------------
+# Networking utilities
+# -----------------------------
+wanip() {
+	local mode="auto"
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: wanip [--dns|--http|--auto]
+	--dns	Use dig + OpenDNS (fast if dig exists)
+	--http	Use https (api.ipify.org)
+	--auto	Prefer dig then curl (default)
+EOF
+				return 0
+				;;
+			--dns)  mode="dns" ;;
+			--http) mode="http" ;;
+			--auto) mode="auto" ;;
+			*) _xer "wanip: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+
+	if [[ "$mode" == "dns" || "$mode" == "auto" ]]; then
+		if _xcore_is dig; then
+			command dig +short myip.opendns.com @resolver1.opendns.com && return 0
+			[[ "$mode" == "dns" ]] && return 1
+		elif [[ "$mode" == "dns" ]]; then
+			_xer "wanip: dig not found"
+			return 1
+		fi
+	fi
+
+	if [[ "$mode" == "http" || "$mode" == "auto" ]]; then
+		_xcore_is curl || { _xer "wanip: curl not found"; return 1; }
+		command curl -fsS --max-time 10 https://api.ipify.org ; echo
+		return 0
+	fi
+}
+
+ports() {
+	local filter=""
+	local proto="both"
+	local listen=1
+	local wide=0
+
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: ports [options]
+Options:
+	-f, --filter <text>	Filter output (case-insensitive)
+	-t, --tcp		TCP only
+	-u, --udp		UDP only
+	-a, --all		Include non-listening (best-effort)
+	-w, --wide		Don't trim columns (where supported)
+EOF
+				return 0
+				;;
+			-f|--filter)
+				shift
+				filter="${1:-}"
+				[[ -n "$filter" ]] || { _xer "ports: missing value for --filter"; return 1; }
+				;;
+			-t|--tcp) proto="tcp" ;;
+			-u|--udp) proto="udp" ;;
+			-a|--all) listen=0 ;;
+			-w|--wide) wide=1 ;;
+			*) _xer "ports: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+
+	local out=""
+	if _xcore_is lsof; then
+		local -a lsof_args=("-nP")
+		[[ "$proto" == "tcp" ]] && lsof_args+=("-iTCP")
+		[[ "$proto" == "udp" ]] && lsof_args+=("-iUDP")
+		[[ "$proto" == "both" ]] && lsof_args+=("-iTCP" "-iUDP")
+		(( listen )) && lsof_args+=("-sTCP:LISTEN")
+		out="$(command lsof "${lsof_args[@]}" 2>/dev/null)"
+	elif _xcore_is ss; then
+		local ss_flags="-tulpen"
+		(( listen == 0 )) && ss_flags="-tupen"
+		[[ "$proto" == "tcp" ]] && ss_flags="${ss_flags/u/}"
+		[[ "$proto" == "udp" ]] && ss_flags="${ss_flags/t/}"
+		out="$(command ss ${=ss_flags} 2>/dev/null)"
+	else
+		out="$(command netstat -an 2>/dev/null)"
+	fi
+
+	if [[ -n "$filter" ]]; then
+		print -r -- "$out" | command grep -i -- "$filter"
+	else
+		print -r -- "$out"
+	fi
+}
+_xhelp_add wanip "Show public IP (wanip --help for modes)"
+_xhelp_add ports "Show open ports (ports --help)"
+
+macs() {
+	if _xcore_is ip; then
+		command ip link | awk '/link\/ether/ {print $2}'
+	else
+		command ifconfig 2>/dev/null | awk '/ether/{print $2}'
+	fi
+}
+_xhelp_add macs "Print MAC addresses"
+
+# -----------------------------
+# Digest shortcuts + verify
+# -----------------------------
+alias sha1='openssl sha1'
+alias sha256='openssl sha256'
+alias sha384='openssl sha384'
+alias sha512='openssl sha512'
+
+sha256verify() {
+	local file="SHA256SUMS"
+	local quiet=0
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: sha256verify [--file <SUMSFILE>] [--quiet|-q]
+Default SUMSFILE: SHA256SUMS
+EOF
+				return 0
+				;;
+			--file|-f)
+				shift
+				file="${1:-}"
+				[[ -n "$file" ]] || { _xer "sha256verify: missing --file value"; return 1; }
+				;;
+			--quiet|-q) quiet=1 ;;
+			*) _xer "sha256verify: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+	[[ -r "$file" ]] || { _xer "sha256verify: cannot read: $file"; return 1; }
+
+	if _xcore_is sha256sum; then
+		(( quiet )) && sha256sum -c "$file" >/dev/null || sha256sum -c "$file"
+	elif _xcore_is shasum; then
+		(( quiet )) && shasum -a 256 -c "$file" >/dev/null || shasum -a 256 -c "$file"
+	else
+		_xer "sha256verify: need sha256sum or shasum"
+		return 1
+	fi
+}
+sha512verify() {
+	local file="SHA512SUMS"
+	local quiet=0
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: sha512verify [--file <SUMSFILE>] [--quiet|-q]
+Default SUMSFILE: SHA512SUMS
+EOF
+				return 0
+				;;
+			--file|-f)
+				shift
+				file="${1:-}"
+				[[ -n "$file" ]] || { _xer "sha512verify: missing --file value"; return 1; }
+				;;
+			--quiet|-q) quiet=1 ;;
+			*) _xer "sha512verify: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+	[[ -r "$file" ]] || { _xer "sha512verify: cannot read: $file"; return 1; }
+
+	if _xcore_is sha512sum; then
+		(( quiet )) && sha512sum -c "$file" >/dev/null || sha512sum -c "$file"
+	elif _xcore_is shasum; then
+		(( quiet )) && shasum -a 512 -c "$file" >/dev/null || shasum -a 512 -c "$file"
+	else
+		_xer "sha512verify: need sha512sum or shasum"
+		return 1
+	fi
+}
+_xhelp_add sha256verify "Verify checksums (sha256verify --help)"
+_xhelp_add sha512verify "Verify checksums (sha512verify --help)"
+
+# -----------------------------
+# Tor
+# -----------------------------
+torstart() {
+	if [[ "$_xcore_os" == "Darwin" ]]; then
+		_xcore_is brew || { _xer "torstart: brew not found"; return 1; }
+		brew upgrade tor && brew services start tor
+	else
+		sudo systemctl start tor
+	fi
+}
+torstop() {
+	if [[ "$_xcore_os" == "Darwin" ]]; then
+		_xcore_is brew || { _xer "torstop: brew not found"; return 1; }
+		brew services stop tor
+	else
+		sudo systemctl stop tor
+	fi
+}
+torrenew() {
+	if [[ "$_xcore_os" == "Darwin" ]]; then
+		_xcore_is brew || { _xer "torrenew: brew not found"; return 1; }
+		brew services reload tor
+	else
+		sudo systemctl reload tor
+	fi
+}
+torcheck() {
+	[[ "$1" == "-h" || "$1" == "--help" ]] && { echo "Usage: torcheck"; return 0; }
+	command curl --max-time 10 -fsS https://check.torproject.org/api/ip \
+		| python3 -c "import sys,json; print(json.load(sys.stdin).get('IsTor'))"
+}
+torip() {
+	[[ "$1" == "-h" || "$1" == "--help" ]] && { echo "Usage: torip"; return 0; }
+	command curl --max-time 10 -fsS https://check.torproject.org/api/ip \
+		| python3 -c "import sys,json; print(json.load(sys.stdin).get('IP'))"
+}
+
+_xhelp_add torstart "Start tor (brew/systemctl)"
+_xhelp_add torstop  "Stop tor"
+_xhelp_add torrenew "Reload tor"
+_xhelp_add torcheck "Print true/false if current exit is Tor"
+_xhelp_add torip    "Print IP as seen by Tor Project"
+
+# -----------------------------
+# Password generator
+# -----------------------------
+pass() {
+	local len=""
+	local min=50
+	local max=80
+	local mode="full"
+
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: pass [options]
+Options:
+	-l, --len <n>		Exact length
+	--min <n>		Min length (default 50)
+	--max <n>		Max length (default 80)
+	--alnum			Only A-Za-z0-9
+	--full			Printable symbols too (default)
+Examples:
+	pass --len 32
+	pass --min 20 --max 40 --alnum
+EOF
+				return 0
+				;;
+			-l|--len)
+				shift
+				len="${1:-}"
+				[[ "$len" =~ '^[0-9]+$' ]] || { _xer "pass: --len must be a number"; return 1; }
+				;;
+			--min)
+				shift
+				min="${1:-}"
+				[[ "$min" =~ '^[0-9]+$' ]] || { _xer "pass: --min must be a number"; return 1; }
+				;;
+			--max)
+				shift
+				max="${1:-}"
+				[[ "$max" =~ '^[0-9]+$' ]] || { _xer "pass: --max must be a number"; return 1; }
+				;;
+			--alnum) mode="alnum" ;;
+			--full)  mode="full" ;;
+			*) _xer "pass: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+
+	if [[ -z "$len" ]]; then
+		(( min <= max )) || { _xer "pass: --min must be <= --max"; return 1; }
+		if _xcore_is jot; then
+			len="$(jot -r 1 "$min" "$max")"
+		elif _xcore_is shuf; then
+			len="$(shuf -i ${min}-${max} -n 1)"
+		else
+			len="$(awk -v a="$min" -v b="$max" 'BEGIN{srand(); print int(a+rand()*(b-a+1))}')"
+		fi
+	fi
+
+	local charset
+	if [[ "$mode" == "alnum" ]]; then
+		charset='A-Za-z0-9'
+	else
+		charset=$'A-Za-z0-9!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'
+	fi
+
+	LC_ALL=C tr -dc "$charset" </dev/urandom | head -c "$len"
+	echo
+}
+_xhelp_add pass "Random password generator (pass --help)"
+
+# -----------------------------
+# SSH helpers
+# -----------------------------
+sshk() {
+	local key="" dest=""
+	local -a extra=()
+
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: sshk -k <KEY|/path/key> -d <USER@HOST> [-- <ssh args...>]
+Examples:
+	sshk -k id_ed25519_work -d user@host
+	sshk -k ~/.ssh/id_ed25519 -d user@host -- -p 2222
+EOF
+				return 0
+				;;
+			-k|--key)
+				shift
+				key="${1:-}"
+				[[ -n "$key" ]] || { _xer "sshk: missing --key value"; return 1; }
+				;;
+			-d|--dest)
+				shift
+				dest="${1:-}"
+				[[ -n "$dest" ]] || { _xer "sshk: missing --dest value"; return 1; }
+				;;
+			--) shift; extra+=("$@"); break ;;
+			*) _xer "sshk: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+
+	[[ -n "$key" && -n "$dest" ]] || { _xer "sshk: need --key and --dest (try --help)"; return 1; }
+
+	local keypath="$key"
+	if [[ "$key" != */* && -r "$HOME/.ssh/$key" ]]; then
+		keypath="$HOME/.ssh/$key"
+	fi
+	[[ -r "$keypath" ]] || { _xer "sshk: key not readable: $keypath"; return 1; }
+
+	command ssh -i "$keypath" "$dest" "${extra[@]}"
+}
+sshgen() {
+	local key="id_ed25519" email="${USER}@$(hostname)"
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: sshgen [--key <name|/path>] [--email <email>]
+Defaults:
+	--key	id_ed25519 (written under ~/.ssh if not a path)
+	--email	user@hostname
+EOF
+				return 0
+				;;
+			--key|-k)
+				shift
+				key="${1:-}"
+				[[ -n "$key" ]] || { _xer "sshgen: missing --key value"; return 1; }
+				;;
+			--email|-e)
+				shift
+				email="${1:-}"
+				[[ -n "$email" ]] || { _xer "sshgen: missing --email value"; return 1; }
+				;;
+			*) _xer "sshgen: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+
+	local keypath="$key"
+	if [[ "$key" != */* ]]; then
+		keypath="$HOME/.ssh/$key"
+	fi
+	command ssh-keygen -t ed25519 -f "$keypath" -C "$email"
+}
+sshcopy() {
+	local key="" dest=""
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: sshcopy -k <key.pub|name|/path> -d <USER@HOST>
+Notes:
+	If -k is a name, it resolves to ~/.ssh/<name> (or ~/.ssh/<name>.pub if needed)
+EOF
+				return 0
+				;;
+			-k|--key)
+				shift
+				key="${1:-}"
+				[[ -n "$key" ]] || { _xer "sshcopy: missing --key value"; return 1; }
+				;;
+			-d|--dest)
+				shift
+				dest="${1:-}"
+				[[ -n "$dest" ]] || { _xer "sshcopy: missing --dest value"; return 1; }
+				;;
+			*) _xer "sshcopy: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+
+	[[ -n "$key" && -n "$dest" ]] || { _xer "sshcopy: need --key and --dest (try --help)"; return 1; }
+
+	local keypath="$key"
+	if [[ "$key" != */* ]]; then
+		if [[ -r "$HOME/.ssh/$key" ]]; then
+			keypath="$HOME/.ssh/$key"
+		elif [[ -r "$HOME/.ssh/$key.pub" ]]; then
+			keypath="$HOME/.ssh/$key.pub"
+		fi
+	fi
+	[[ -r "$keypath" ]] || { _xer "sshcopy: key not readable: $keypath"; return 1; }
+
+	command ssh-copy-id -i "$keypath" "$dest"
+}
+
+_xhelp_add sshk		"ssh with a specific key (sshk --help)"
+_xhelp_add sshgen	"generate ed25519 key (sshgen --help)"
+_xhelp_add sshcopy	"copy pubkey to server (sshcopy --help)"
+
+# -----------------------------
+# Git with specific SSH key
+# -----------------------------
+gitk() {
+	local key=""
+	local -a cmd=()
+
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: gitk -k <KEY|/path/key> -- <git args...>
+Example:
+	gitk -k id_ed25519_work -- clone git@github.com:org/repo.git
+EOF
+				return 0
+				;;
+			-k|--key)
+				shift
+				key="${1:-}"
+				[[ -n "$key" ]] || { _xer "gitk: missing --key value"; return 1; }
+				;;
+			--) shift; cmd+=("$@"); break ;;
+			*) _xer "gitk: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+
+	[[ -n "$key" ]] || { _xer "gitk: need --key (try --help)"; return 1; }
+	(( ${#cmd[@]} )) || { _xer "gitk: missing git args (use --)"; return 1; }
+
+	local keypath="$key"
+	if [[ "$key" != */* && -r "$HOME/.ssh/$key" ]]; then
+		keypath="$HOME/.ssh/$key"
+	fi
+	[[ -r "$keypath" ]] || { _xer "gitk: key not readable: $keypath"; return 1; }
+
+	GIT_SSH_COMMAND="ssh -i \"$keypath\" -o IdentitiesOnly=yes" command git "${cmd[@]}"
+}
+_xhelp_add gitk "Run git using a specific SSH key (gitk --help)"
+
+# -----------------------------
+# OS + USB info
+# -----------------------------
+os() {
+	local mode="default"
+	while (( $# )); do
+		case "$1" in
+			-h|--help)
+				cat <<'EOF'
+Usage: os [--id|--desc|--release|--all|--arch]
+EOF
+				return 0
+				;;
+			--id|-i) mode="id" ;;
+			--desc|-d) mode="desc" ;;
+			--release|-r) mode="release" ;;
+			--all|-a) mode="all" ;;
+			--arch) mode="arch" ;;
+			*) _xer "os: unknown flag: $1"; return 1 ;;
+		esac
+		shift
+	done
+
+	if [[ "$_xcore_os" == "Darwin" ]]; then
+		case "$mode" in
+			id) uname -s ;;
+			desc) sw_vers -productName ;;
+			release) sw_vers -productVersion ;;
+			arch) uname -m ;;
+			all) sw_vers; uname -a ;;
+			*) printf "%s %s (%s)\n" "$(sw_vers -productName)" "$(sw_vers -productVersion)" "$(uname -m)" ;;
+		esac
+	else
+		if _xcore_is lsb_release; then
+			case "$mode" in
+				id) lsb_release -i | cut -f2- ;;
+				desc) lsb_release -d | cut -f2- ;;
+				release) lsb_release -r | cut -f2- ;;
+				arch) uname -m ;;
+				all) lsb_release -a ;;
+				*) lsb_release -d | cut -f2- ;;
+			esac
+		else
+			case "$mode" in
+				all) uname -a ;;
+				arch) uname -m ;;
+				*) uname -sr ;;
+			esac
+		fi
+	fi
+}
+
+usbdevices() {
+	[[ "$1" == "-h" || "$1" == "--help" ]] && { echo "Usage: usbdevices"; return 0; }
+	if [[ "$_xcore_os" == "Darwin" ]]; then
+		command system_profiler SPUSBDataType
+	else
+		_xcore_is lsusb || { _xer "usbdevices: lsusb not found"; return 1; }
+		command lsusb
+	fi
+}
+
+_xhelp_add os		"OS info (os --help)"
+_xhelp_add usbdevices	"List USB devices"
+
+# -----------------------------
+# Greeting
+# -----------------------------
+hello() {
+	clear
+	_xt "👋  Welcome $(id -un)"
+	printf "%s🕒  %s%s%s\n" "${_xc_c}" "${_xc_0}" "${_xc_b}$(date "+%c")${_xc_0}"
+
+	if [[ "$_xcore_os" == "Darwin" ]]; then
+		local model="$(sysctl -n hw.model 2>/dev/null)"
+		printf "%s💻  %s%s\n" "${_xc_c}" "${_xc_0}" "${model:-unknown}"
+		printf "%s🧩  %s%s\n" "${_xc_c}" "${_xc_0}" "$(os)"
+	else
+		local vendor="" product=""
+		[[ -r /sys/devices/virtual/dmi/id/sys_vendor ]] && vendor="$(< /sys/devices/virtual/dmi/id/sys_vendor)"
+		[[ -r /sys/devices/virtual/dmi/id/product_name ]] && product="$(< /sys/devices/virtual/dmi/id/product_name)"
+		[[ -n "$vendor$product" ]] && printf "%s💻  %s%s %s\n" "${_xc_c}" "${_xc_0}" "$vendor" "$product"
+		printf "%s🧩  %s%s\n" "${_xc_c}" "${_xc_0}" "$(os)"
+		if _xcore_is hostname; then
+			local ip="$(hostname -I 2>/dev/null | awk '{print $1}')"
+			[[ -n "$ip" ]] && printf "%s🌐  %s%s\n" "${_xc_c}" "${_xc_0}" "$ip"
+		fi
+	fi
+
+	echo
+	printf "%s▶  %sRun %sxhelp%s\n" "${_xc_y}" "${_xc_0}" "${_xc_b}" "${_xc_0}"
+}
+_xhelp_add hello "Clear screen + quick system overview"
+
+### XCORE- ###
