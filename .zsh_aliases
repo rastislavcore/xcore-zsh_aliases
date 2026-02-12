@@ -6,13 +6,13 @@
 _xcore_os="${_xcore_os:-$(uname -s 2>/dev/null)}"
 _xcore_is() { command -v "$1" >/dev/null 2>&1 }
 
-_xc_0=$'%{\e[0m%}'
-_xc_b=$'%{\e[1m%}'
-_xc_d=$'%{\e[2m%}'
-_xc_r=$'%{\e[31m%}'
-_xc_g=$'%{\e[32m%}'
-_xc_y=$'%{\e[33m%}'
-_xc_c=$'%{\e[36m%}'
+_xc_0=$'\e[0m'
+_xc_b=$'\e[1m'
+_xc_d=$'\e[2m'
+_xc_r=$'\e[31m'
+_xc_g=$'\e[32m'
+_xc_y=$'\e[33m'
+_xc_c=$'\e[36m'
 
 _xhr() { printf "%s\n" "────────────────────────────────────────────────────────────"; }
 _xt()  { printf "%s%s%s\n" "${_xc_b}${_xc_c}" "$*" "${_xc_0}"; }
